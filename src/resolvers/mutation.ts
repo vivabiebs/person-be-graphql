@@ -9,7 +9,6 @@ import {
 
 const Mutation = {
   createPerson(parent: any, args: any, ctx: any, info: any) {
-    console.log(args.input)
     let personToCreate = {
       ...args.input,
     };
@@ -41,7 +40,7 @@ const Mutation = {
     );
 
     if (!person) {
-      throw new Error("Person not found");
+      throw new Error("Person not found!");
     }
 
     person.firstname = args.input.firstname ?? person.firstname;
