@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@graphql-tools/schema": "^8.3.11",
+    "@prisma/client": "^4.8.1",
     "apollo-server": "^3.7.0",
     "apollo-server-core": "^3.7.0",
     "apollo-server-express": "^3.7.0",
@@ -20,12 +21,13 @@
     "graphql-subscriptions": "^2.0.0",
     "graphql-ws": "^5.8.2",
     "subscriptions-transport-ws": "^0.11.0",
-    "ws": "^8.6.0",
     "uuid": "^9.0.0",
-    "uuidv4": "^6.2.13"
+    "uuidv4": "^6.2.13",
+    "ws": "^8.6.0"
   },
   "devDependencies": {
     "@types/node": "^17.0.31",
+    "prisma": "^4.9.0",
     "ts-node": "^10.7.0",
     "ts-node-dev": "^1.1.8",
     "typescript": "^4.6.4"

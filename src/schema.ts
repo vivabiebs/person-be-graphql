@@ -58,8 +58,10 @@ const typeDefs = gql`
     status: Status!
     birthdate: String!
     haveChild: Boolean!
-    children: [CreatePersonInput!]
-    parents: [CreatePersonInput!]
+    # children: [CreatePersonInput!]
+    # parents: [CreatePersonInput!]
+    children: [ID!]
+    parents: [ID!]
   }
 
   input UpdatePersonInput {

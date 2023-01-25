@@ -6,35 +6,65 @@ import {
   addParentstoChildren,
   deleteRelationship,
 } from "../utils/addRelation";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient({ log: ['query', 'info'] });
 
 const Mutation = {
-  createPerson(parent: any, args: any, ctx: any, info: any) {
+  async createPerson(parent: any, args: any, ctx: any, info: any) {
+    console.log(args.input)
+    // console.log(typeof args.input.id)
+    args.input.id = parseInt(args.input.id);
     let personToCreate = {
       ...args.input,
     };
 
-    let children: string[] = [];
-    if (personToCreate.haveChild && personToCreate.children) {
-      children = addChildren(personToCreate, ctx.persons);
+    let children: number[] = [];
+    if (args.input.children) {
+      children = args.input.children.map((id) => parseInt(id));
     }
+    // if (personToCreate.haveChild && personToCreate.children) {
+    //   children = addChildren(personToCreate);
+    // }
 
-    let parents: string[] = [];
-    if (personToCreate.parents) {
-      parents = addParents(personToCreate, ctx.persons);
+    let parents: number[] = [];
+    if (args.input.parents) {
+      parents = args.input.parents.map((id) => parseInt(id));
     }
+    // if (personToCreate.parents) {
+    //   parents = addParents(personToCreate);
+    // }
     personToCreate = {
       ...personToCreate,
       children,
       parents,
     };
 
-    ctx.persons.push(personToCreate);
-    pubsub.publish("CREATED", {
-      createPerson: { ...personToCreate, children, parents },
-    });
+    const createPerson = await prisma.person.create({ data: personToCreate })
+    console.log(createPerson);
+    const parentToUpdate = await Promise.all(createPerson.parents.map(async (p) => {
+      return await prisma.person.update({
+        where: {
+          id: p
+        }
+        , data: {
+          children: createPerson.id
+        }
+      })
+    }));
+    console.log(parentToUpdate)
+    // const p = await prisma.person.update({ 
+    //   where: {
+
+    // }
+    // , data: personToCreate })
+    // ctx.persons.push(personToCreate);
+    // pubsub.publish("CREATED", {
+    //   createPerson: { ...personToCreate, children, parents },
+    // });
     return personToCreate;
   },
-  updatePerson(parent: any, args: any, ctx: any, info: any) {
+  async updatePerson(parent: any, args: any, ctx: any, info: any) {
     const person: Person = ctx.persons.find(
       (person: Person) => person.id === args.id
     );

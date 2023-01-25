@@ -1,46 +1,128 @@
 import { Person } from "../db";
+import { Gender, PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient({ log: ['query', 'info'] });
 
 const Query = {
-  person(parent: any, args: any, ctx: any, info: any) {
-    const person = ctx.persons.find((p: Person) => p.id === args.id);
+  async person(parent: any, args: any, ctx: any, info: any) {
+    // const person = ctx.persons.find((p: Person) => p.id === args.id);
+    const person = await prisma.person.findUnique({
+      where: {
+        id: parseInt(args.id)
+      },
+    })
     if (!person) {
       throw new Error("Person not found!");
     }
     return person;
   },
-  people(parent: any, args: any, ctx: any, info: any) {
+
+  async people(parent: any, args: any, ctx: any, info: any) {
+    let people = [];
     if (!args.filter) {
-      return ctx.persons;
+      people = await prisma.person.findMany()
+      return people;
     }
     const { age, gender, status } = args.filter;
-    let people: Person[] = [];
+    const enumGender = gender + "" === 'MALE' ? Gender.MALE : gender + "" === 'FEMALE' ? Gender.FEMALE : Gender.OTHER;
 
-    if (!age && !gender && !status) {
-      return ctx.persons;
+    let query = {};
+
+    if (age && gender && status) {
+      query = {
+        where: {
+          age: {
+            equals: age,
+          },
+          AND: {
+            gender: {
+              equals: enumGender,
+            },
+            status: {
+              equals: status,
+            },
+          },
+        },
+      }
+    } else if (age) {
+      query = {
+        where: {
+          age: {
+            equals: age,
+          },
+        },
+      }
+
+      if (gender) {
+        query = {
+          where: {
+            age: {
+              equals: age,
+            },
+            AND: {
+              gender: {
+                equals: enumGender,
+              }
+            },
+          },
+        }
+      }
+
+      if (status) {
+        query = {
+          where: {
+            age: {
+              equals: age,
+            },
+            AND: {
+              status: {
+                equals: status,
+              },
+            },
+          },
+        }
+      }
+    } else if (gender) {
+      query = {
+        where: {
+          gender: {
+            equals: enumGender,
+          },
+        },
+      }
+      if (status) {
+        query = {
+          where: {
+            gender: {
+              equals: enumGender,
+            },
+            AND: {
+              status: {
+                equals: status,
+              },
+            },
+          },
+        }
+      }
+    } else if (status) {
+      query = {
+        where: {
+          status: {
+            equals: status,
+          },
+        },
+      }
     }
 
-    if (age) {
-      const filteredByAge: Person[] = ctx.persons.filter(
-        (person: Person) => person.age === age
-      );
-      people = filteredByAge;
-    }
-    if (gender) {
-      people = age ? people : ctx.persons;
-      const filteredByGender: Person[] = people.filter((person: Person) =>
-        gender.includes(person.gender)
-      );
-      people = filteredByGender;
-    }
-    if (status) {
-      people = people.length ? people : ctx.persons;
-      const filteredByStatus: Person[] = people.filter(
-        (person: Person) => person.status === status
-      );
-      people = filteredByStatus;
-    }
+    people = await prisma.person.findMany(query);
     return people.length ? people : [];
   },
 };
+
+const Person = {
+  parents(parent: any, args: any, ctx: any, info: any){
+    console.log(parent)
+  }
+}
 
 export default Query;
