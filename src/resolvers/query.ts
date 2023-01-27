@@ -1,11 +1,9 @@
-import { Person } from "../db";
-import { Gender, PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient({ log: ['query', 'info'] });
+import { Gender } from "@prisma/client";
+import { prisma } from "../index";
 
 const Query = {
   async person(parent: any, args: any, ctx: any, info: any) {
-    // const person = ctx.persons.find((p: Person) => p.id === args.id);
     const person = await prisma.person.findUnique({
       where: {
         id: parseInt(args.id)
@@ -20,16 +18,34 @@ const Query = {
   async people(parent: any, args: any, ctx: any, info: any) {
     let people = [];
     if (!args.filter) {
-      people = await prisma.person.findMany()
+      people = await prisma.person.findMany({
+        orderBy:
+        {
+          id: 'asc',
+        },
+      })
       return people;
     }
     const { age, gender, status } = args.filter;
     const enumGender = gender + "" === 'MALE' ? Gender.MALE : gender + "" === 'FEMALE' ? Gender.FEMALE : Gender.OTHER;
 
     let query = {};
+    if (!age && !gender && !status) {
+      people = await prisma.person.findMany({
+        orderBy:
+        {
+          id: 'asc',
+        },
+      })
+      return people;
+    }
 
     if (age && gender && status) {
       query = {
+        orderBy:
+        {
+          id: 'asc',
+        },
         where: {
           age: {
             equals: age,
@@ -46,6 +62,10 @@ const Query = {
       }
     } else if (age) {
       query = {
+        orderBy:
+        {
+          id: 'asc',
+        },
         where: {
           age: {
             equals: age,
@@ -55,6 +75,10 @@ const Query = {
 
       if (gender) {
         query = {
+          orderBy:
+          {
+            id: 'asc',
+          },
           where: {
             age: {
               equals: age,
@@ -70,6 +94,10 @@ const Query = {
 
       if (status) {
         query = {
+          orderBy:
+          {
+            id: 'asc',
+          },
           where: {
             age: {
               equals: age,
@@ -84,6 +112,10 @@ const Query = {
       }
     } else if (gender) {
       query = {
+        orderBy:
+        {
+          id: 'asc',
+        },
         where: {
           gender: {
             equals: enumGender,
@@ -92,6 +124,10 @@ const Query = {
       }
       if (status) {
         query = {
+          orderBy:
+          {
+            id: 'asc',
+          },
           where: {
             gender: {
               equals: enumGender,
@@ -106,6 +142,10 @@ const Query = {
       }
     } else if (status) {
       query = {
+        orderBy:
+        {
+          id: 'asc',
+        },
         where: {
           status: {
             equals: status,
@@ -114,15 +154,10 @@ const Query = {
       }
     }
 
+
     people = await prisma.person.findMany(query);
     return people.length ? people : [];
   },
 };
-
-const Person = {
-  parents(parent: any, args: any, ctx: any, info: any){
-    console.log(parent)
-  }
-}
 
 export default Query;

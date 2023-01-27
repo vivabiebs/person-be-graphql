@@ -24,8 +24,8 @@ interface Person {
   status: Status;
   birthdate: string;
   haveChild: boolean;
-  children: string[];
-  parents: string[];
+  children: number[];
+  parents: number[];
 }
 
 let persons: Person[] = [
@@ -39,7 +39,7 @@ let persons: Person[] = [
     birthdate: "09-05-2000",
     haveChild: false,
     children: [],
-    parents: ["2", "3"],
+    parents: [2, 3],
   },
   {
     id: "2",
@@ -50,7 +50,7 @@ let persons: Person[] = [
     status: Status.MARRIED,
     birthdate: "13-08-1976",
     haveChild: true,
-    children: ["1", "4"],
+    children: [1, 4],
     parents: [],
   },
   {
@@ -62,7 +62,7 @@ let persons: Person[] = [
     status: Status.MARRIED,
     birthdate: "24-04-1971",
     haveChild: true,
-    children: ["1", "4"],
+    children: [1, 4],
     parents: [],
   },
   {
@@ -75,7 +75,7 @@ let persons: Person[] = [
     birthdate: "14-03-2002",
     haveChild: false,
     children: [],
-    parents: ["2", "3"],
+    parents: [2, 3],
   },
   {
     id: "5",
@@ -87,7 +87,7 @@ let persons: Person[] = [
     birthdate: "14-02-1997",
     haveChild: false,
     children: [],
-    parents: ["2", "3"],
+    parents: [2, 3],
   }
 ];
 

@@ -25,6 +25,9 @@
     "uuidv4": "^6.2.13",
     "ws": "^8.6.0"
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "devDependencies": {
     "@types/node": "^17.0.31",
     "prisma": "^4.9.0",

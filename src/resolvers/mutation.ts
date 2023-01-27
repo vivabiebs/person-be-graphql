@@ -1,19 +1,18 @@
 import { Person } from "../db";
-import { addChildren, addParents } from "../utils/createPerson";
-import { pubsub } from "../index";
 import {
   addChildrenToParents,
   addParentstoChildren,
-  deleteRelationship,
-} from "../utils/addRelation";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient({ log: ['query', 'info'] });
+  deleteChildrenFromParents,
+  deleteChildrenFromParentsUpdate,
+  deleteParentsFromChildren,
+  deleteParentsFromChildrenUpdate,
+  updateChildrenOfParents,
+  updateParentsOfChildren
+} from "../utils/mutateRelationship";
+import { pubsub, prisma } from "../index";
 
 const Mutation = {
   async createPerson(parent: any, args: any, ctx: any, info: any) {
-    console.log(args.input)
-    // console.log(typeof args.input.id)
     args.input.id = parseInt(args.input.id);
     let personToCreate = {
       ...args.input,
@@ -23,17 +22,11 @@ const Mutation = {
     if (args.input.children) {
       children = args.input.children.map((id) => parseInt(id));
     }
-    // if (personToCreate.haveChild && personToCreate.children) {
-    //   children = addChildren(personToCreate);
-    // }
 
     let parents: number[] = [];
     if (args.input.parents) {
       parents = args.input.parents.map((id) => parseInt(id));
     }
-    // if (personToCreate.parents) {
-    //   parents = addParents(personToCreate);
-    // }
     personToCreate = {
       ...personToCreate,
       children,
@@ -41,36 +34,65 @@ const Mutation = {
     };
 
     const createPerson = await prisma.person.create({ data: personToCreate })
-    console.log(createPerson);
-    const parentToUpdate = await Promise.all(createPerson.parents.map(async (p) => {
-      return await prisma.person.update({
-        where: {
-          id: p
-        }
-        , data: {
-          children: createPerson.id
-        }
-      })
-    }));
-    console.log(parentToUpdate)
-    // const p = await prisma.person.update({ 
-    //   where: {
 
-    // }
-    // , data: personToCreate })
-    // ctx.persons.push(personToCreate);
-    // pubsub.publish("CREATED", {
-    //   createPerson: { ...personToCreate, children, parents },
-    // });
+    if (createPerson.parents) {
+      addChildrenToParents(createPerson);
+    }
+
+    if (createPerson.haveChild && createPerson.children) {
+      addParentstoChildren(createPerson);
+    }
+    pubsub.publish("CREATED", {
+      createPerson: { ...personToCreate, children, parents },
+    });
     return personToCreate;
   },
   async updatePerson(parent: any, args: any, ctx: any, info: any) {
-    const person: Person = ctx.persons.find(
-      (person: Person) => person.id === args.id
-    );
+    console.log("input", args.input)
 
-    if (!person) {
-      throw new Error("Person not found!");
+    const id = parseInt(args.id);
+    let person = await prisma.person.findUnique({
+      where: {
+        id: id
+      }
+    })
+
+    let missingChildren = [];
+    let missingParents = [];
+    if (args.input.children) {
+      args.input.children = args.input.children.map((c) => Number(c));
+      missingChildren = person.children.filter(item => args.input.children.indexOf(item) < 0);
+      console.log("missing child", missingChildren)
+    }
+
+    if (args.input.parents) {
+      args.input.parents = args.input.parents.map((p) => Number(p));
+      missingParents = person.parents.filter(item => args.input.parents.indexOf(item) < 0);
+      console.log("missing parent", missingParents)
+    }
+
+    if (missingChildren.length !== 0) {
+      console.log("is in missing child")
+      missingChildren.map(async (c) => {
+        let missed = await prisma.person.findUnique({
+          where: {
+            id: c
+          }
+        })
+        deleteParentsFromChildrenUpdate(missed, person.id);
+      })
+    }
+
+    if (missingParents.length !== 0) {
+      console.log("is in missing parent")
+      missingParents.map(async (p) => {
+        let missed = await prisma.person.findUnique({
+          where: {
+            id: p
+          }
+        })
+        deleteChildrenFromParentsUpdate(missed, person.id);
+      })
     }
 
     person.firstname = args.input.firstname ?? person.firstname;
@@ -78,60 +100,60 @@ const Mutation = {
     person.gender = args.input.gender ?? person.gender;
     person.status = args.input.status ?? person.status;
     person.age = args.input.age ?? person.age;
-    person.birthdate = args.input.birthdate ?? person.age;
+    person.birthdate = args.input.birthdate ?? person.birthdate;
     person.haveChild = args.input.haveChild ?? person.haveChild;
+    person.children = args.input.children ?? person.children;
+    person.parents = args.input.parents ?? person.parents;
 
-    let childrenIds = [];
     if (args.input.children) {
-      args.input.children.forEach((child: Person) => {
-        childrenIds.push(child.id);
-      });
-
-      addParentstoChildren(person.id, childrenIds, ctx.persons);
+      addParentstoChildren(person);
     }
 
-    let parentsIds = [];
     if (args.input.parents) {
-      args.input.parents.forEach((parent: Person) => {
-        parentsIds.push(parent.id);
-      });
-
-      addChildrenToParents(person.id, parentsIds, ctx.persons);
+      addChildrenToParents(person);
     }
-    deleteRelationship(person, ctx.persons, childrenIds, parentsIds);
-    person.children = args.input.children ? childrenIds : person.children;
-    person.parents = args.input.parents ? parentsIds : person.parents;
 
-    pubsub.publish("UPDATED", { updatePerson: person });
-    return person;
+    const updatePerson = await prisma.person.update({
+      where: {
+        id: id
+      }
+      , data: {
+        firstname: person.firstname,
+        lastname: person.lastname,
+        gender: person.gender,
+        status: person.status,
+        age: person.age,
+        birthdate: person.birthdate,
+        haveChild: person.haveChild,
+        children: person.children,
+        parents: person.parents
+      }
+    })
+
+
+    pubsub.publish("UPDATED", { updatePerson: updatePerson });
+    return updatePerson;
   },
-  deletePerson(parent: any, args: any, ctx: any, info: any) {
-    const personIndex = ctx.persons.findIndex(
-      (person: Person) => person.id === args.id
-    );
-    if (personIndex === -1) {
-      throw new Error("Person not found!");
-    }
-    const deletePerson: Person = ctx.persons.splice(personIndex, 1);
+  async deletePerson(parent: any, args: any, ctx: any, info: any) {
+    const id = parseInt(args.id);
+    const deletePerson = await prisma.person.delete({
+      where: {
+        id: id
+      },
+    })
 
-    for (let i = 0; i < ctx.persons.length; i++) {
-      const person: Person = ctx.persons[i];
-      if (person.parents.includes(deletePerson[0].id)) {
-        person.parents = person.parents.filter(
-          (p, i) => p[i] !== deletePerson[0].id
-        );
-      }
-      if (person.children.includes(deletePerson[0].id)) {
-        person.children = person.children.filter(
-          (c, i) => c[i] !== deletePerson[0].id
-        );
-      }
+    if (deletePerson.haveChild && deletePerson.children) {
+      deleteParentsFromChildren(deletePerson);
+    }
+
+    if (deletePerson.parents) {
+      deleteChildrenFromParents(deletePerson)
     }
 
     pubsub.publish("DELETED", {
-      deletePerson: deletePerson[0],
+      deletePerson: deletePerson,
     });
-    return deletePerson[0];
+    return deletePerson;
   },
 };
 

@@ -11,6 +11,9 @@ import Person from "./resolvers/person";
 import Query from "./resolvers/query";
 import Subscription from "./resolvers/subscription";
 import typeDefs from "./schema";
+import { PrismaClient } from "@prisma/client";
+
+export const prisma = new PrismaClient();
 
 export const pubsub = new PubSub();
 
