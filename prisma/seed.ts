@@ -12,7 +12,7 @@ async function main() {
             status: Status.SINGLE,
             birthdate: "09-05-2000",
             haveChild: false,
-            children: [3,4],
+            children: [3, 4],
             parents: [],
         }, {
             id: 2,
@@ -33,7 +33,7 @@ async function main() {
             gender: Gender.MALE,
             status: Status.SINGLE,
             birthdate: "25-12-1997",
-            haveChild: true,
+            haveChild: false,
             children: [],
             parents: [1, 2],
         }, {
@@ -45,8 +45,30 @@ async function main() {
             status: Status.SINGLE,
             birthdate: "05-05-1996",
             haveChild: true,
-            children: [],
+            children: [6],
             parents: [1],
+        }, {
+            id: 5,
+            firstname: 'Jaehyun',
+            lastname: 'Jeong',
+            age: 26,
+            gender: Gender.MALE,
+            status: Status.SINGLE,
+            birthdate: "14-03-1997",
+            haveChild: false,
+            children: [],
+            parents: [2],
+        }, {
+            id: 6,
+            firstname: 'B',
+            lastname: 'Satur',
+            age: 11,
+            gender: Gender.MALE,
+            status: Status.SINGLE,
+            birthdate: "05-05-2012",
+            haveChild: false,
+            children: [],
+            parents: [4],
         }
         ]
     })
