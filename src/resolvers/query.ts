@@ -1,6 +1,7 @@
 
 import { Gender } from "@prisma/client";
 import { prisma } from "../index";
+import { reCheck } from "../utils/functions";
 
 const Query = {
   async person(parent: any, args: any, ctx: any, info: any) {
@@ -24,6 +25,7 @@ const Query = {
           id: 'asc',
         },
       })
+      people = reCheck(people);
       return people;
     }
     const { age, gender, status } = args.filter;
@@ -37,6 +39,7 @@ const Query = {
           id: 'asc',
         },
       })
+      people = reCheck(people);
       return people;
     }
 
@@ -154,8 +157,8 @@ const Query = {
       }
     }
 
-
     people = await prisma.person.findMany(query);
+    people = reCheck(people);
     return people.length ? people : [];
   },
 };

@@ -11,7 +11,7 @@ async function main() {
             gender: Gender.FEMALE,
             status: Status.SINGLE,
             birthdate: "09-05-2000",
-            haveChild: false,
+            haveChild: true,
             children: [3, 4],
             parents: [],
         }, {
@@ -72,8 +72,6 @@ async function main() {
         }
         ]
     })
-
-    console.log({ "created": createdPeople })
 }
 main()
     .then(async () => {
